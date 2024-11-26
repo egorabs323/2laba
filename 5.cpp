@@ -1,40 +1,78 @@
 #include <iostream>
+#include <algorithm> 
 using namespace std;
 
-// Структура для узла бинарного дерева поиска
+// РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ СѓР·Р»Р° Р±РёРЅР°СЂРЅРѕРіРѕ РґРµСЂРµРІР° РїРѕРёСЃРєР°
 struct Node {
     int data;
     Node* left;
     Node* right;
-    
+
     Node(int val) : data(val), left(nullptr), right(nullptr) {}
 };
 
-// Функция для вставки элемента в бинарное дерево поиска
+// РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ РјР°СЃСЃРёРІР°
+struct DynamicArray {
+    int* data;
+    int size;
+    int capacity;
+
+    DynamicArray(int cap) : size(0), capacity(cap) {
+        data = new int[capacity];
+    }
+
+    ~DynamicArray() {
+        delete[] data;
+    }
+
+    void push_back(int value) {
+        if (size >= capacity) {
+            capacity *= 2;  // РЈРІРµР»РёС‡РёРІР°РµРј РµРјРєРѕСЃС‚СЊ РјР°СЃСЃРёРІР°
+            int* newData = new int[capacity];
+            for (int i = 0; i < size; ++i) {
+                newData[i] = data[i];
+            }
+            delete[] data;
+            data = newData;
+        }
+        data[size++] = value;
+    }
+
+    int operator[](int index) const {
+        return data[index];
+    }
+
+    int& operator[](int index) {
+        return data[index];
+    }
+};
+
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РІСЃС‚Р°РІРєРё СЌР»РµРјРµРЅС‚Р° РІ Р±РёРЅР°СЂРЅРѕРµ РґРµСЂРµРІРѕ РїРѕРёСЃРєР°
 Node* insert(Node* root, int value) {
     if (root == nullptr) {
-        return new Node(value); // Создаем новый узел
+        return new Node(value); // РЎРѕР·РґР°РµРј РЅРѕРІС‹Р№ СѓР·РµР»
     }
     if (value < root->data) {
-        root->left = insert(root->left, value); // Вставляем в левое поддерево
+        root->left = insert(root->left, value); // Р’СЃС‚Р°РІР»СЏРµРј РІ Р»РµРІРѕРµ РїРѕРґРґРµСЂРµРІРѕ
     } else {
-        root->right = insert(root->right, value); // Вставляем в правое поддерево
+        root->right = insert(root->right, value); // Р’СЃС‚Р°РІР»СЏРµРј РІ РїСЂР°РІРѕРµ РїРѕРґРґРµСЂРµРІРѕ
     }
     return root;
 }
 
-// Функция для поиска и вывода узлов с двумя детьми
-void findNodesWithTwoChildren(Node* root) {
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЃР±РѕСЂР° СѓР·Р»РѕРІ СЃ РґРІСѓРјСЏ РґРµС‚СЊРјРё РІ РєРѕРЅС‚РµР№РЅРµСЂ
+void collectNodesWithTwoChildren(Node* root, DynamicArray& result) {
     if (root == nullptr) return;
+
+    // Р РµРєСѓСЂСЃРёРІРЅС‹Р№ РѕР±С…РѕРґ РґРµСЂРµРІР°
+    collectNodesWithTwoChildren(root->left, result);
     
-    // Рекурсивный обход дерева
+    // Р•СЃР»Рё Сѓ С‚РµРєСѓС‰РµРіРѕ СѓР·Р»Р° РµСЃС‚СЊ РґРІР° РїРѕС‚РѕРјРєР°, РґРѕР±Р°РІР»СЏРµРј РµРіРѕ РІ СЂРµР·СѓР»СЊС‚Р°С‚
     if (root->left != nullptr && root->right != nullptr) {
-        cout << root->data << " "; // Выводим узел с двумя детьми
+        result.push_back(root->data); // Р”РѕР±Р°РІР»СЏРµРј СѓР·РµР» СЃ РґРІСѓРјСЏ РґРµС‚СЊРјРё
     }
 
-    // Обходим левое и правое поддеревья
-    findNodesWithTwoChildren(root->left);
-    findNodesWithTwoChildren(root->right);
+    collectNodesWithTwoChildren(root->right, result);
 }
 
 int main() {
@@ -42,18 +80,29 @@ int main() {
     int value;
     Node* root = nullptr;
     
-    cout << "Введите последовательность целых чисел, заканчивающуюся 0 (ноль):\n";
+    cout << "Р’РІРµРґРёС‚Рµ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ С†РµР»С‹С… С‡РёСЃРµР», Р·Р°РєР°РЅС‡РёРІР°СЋС‰СѓСЋСЃСЏ 0 :\n";
     
-    // Вводим элементы в дерево
+    // Р’РІРѕРґРёРј СЌР»РµРјРµРЅС‚С‹
     while (true) {
         cin >> value;
-        if (value == 0) break; // Завершаем ввод на 0
-        root = insert(root, value); // Вставляем элемент в дерево
+        if (value == 0) break; // Р—Р°РІРµСЂС€Р°РµРј РІРІРѕРґ РЅР° 0
+        root = insert(root, value); // Р’СЃС‚Р°РІР»СЏРµРј СЌР»РµРјРµРЅС‚ РІ РґРµСЂРµРІРѕ
     }
     
-    // Выводим узлы с двумя детьми в порядке возрастания
-    cout << "Узлы с двумя детьми: ";
-    findNodesWithTwoChildren(root);
+    // Р”РёРЅР°РјРёС‡РµСЃРєРёР№ РјР°СЃСЃРёРІ РґР»СЏ СЃР±РѕСЂР° СѓР·Р»РѕРІ СЃ РґРІСѓРјСЏ РґРµС‚СЊРјРё
+    DynamicArray result(10);  // РќР°С‡Р°Р»СЊРЅР°СЏ РµРјРєРѕСЃС‚СЊ 10
+    
+    // РЎРѕР±РёСЂР°РµРј СѓР·Р»С‹ СЃ РґРІСѓРјСЏ РґРµС‚СЊРјРё
+    collectNodesWithTwoChildren(root, result);
+    
+    // РЎРѕСЂС‚РёСЂСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚ РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ
+    sort(result.data, result.data + result.size);
+    
+    // Р’С‹РІРѕРґРёРј СѓР·Р»С‹ СЃ РґРІСѓРјСЏ РґРµС‚СЊРјРё РІ РїРѕСЂСЏРґРєРµ РІРѕР·СЂР°СЃС‚Р°РЅРёСЏ
+    cout << "РЈР·Р»С‹ СЃ РґРІСѓРјСЏ РґРµС‚СЊРјРё: ";
+    for (int i = 0; i < result.size; ++i) {
+        cout << result[i] << " ";
+    }
     cout << endl;
     
     return 0;
