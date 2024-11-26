@@ -1,107 +1,92 @@
 #include <iostream>
-#include <cmath>
-#include <cstdlib>
-
 using namespace std;
 
-// Функция для нахождения минимальной разницы между суммами двух подмножеств
-void findSubsetWithMinimalDifference(int nums[], int n) {
-    int sum = 0;
-    for (int i = 0; i < n; ++i) {
-        sum += nums[i];  // Вычисляем общую сумму всех элементов
+// РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ РјР°СЃСЃРёРІР°
+struct DynamicArray {
+    int* data;
+    int size;
+    int capacity;
+
+    // РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
+    DynamicArray(int cap) : size(0), capacity(cap) {
+        data = new int[capacity];
     }
 
-    // Максимальная возможная сумма одного из подмножеств
-    int target = sum / 2;
-
-    // Динамическое программирование для поиска всех возможных сумм <= sum / 2
-    bool dp[target + 1];
-    for (int i = 0; i <= target; ++i) {
-        dp[i] = false;
+    // Р”РµСЃС‚СЂСѓРєС‚РѕСЂ
+    ~DynamicArray() {
+        delete[] data;
     }
-    dp[0] = true;  // Сумма 0 всегда достижима (пустое подмножество)
 
-    // Для каждого числа обновляем возможные суммы
-    for (int i = 0; i < n; ++i) {
-        for (int j = target; j >= nums[i]; --j) {
-            dp[j] = dp[j] || dp[j - nums[i]];
+    // РњРµС‚РѕРґ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ СЌР»РµРјРµРЅС‚Р° РІ РјР°СЃСЃРёРІ
+    void push_back(int value) {
+        if (size >= capacity) {
+            capacity *= 2;  // РЈРІРµР»РёС‡РёРІР°РµРј РµРјРєРѕСЃС‚СЊ РјР°СЃСЃРёРІР°
+            int* newData = new int[capacity];
+            for (int i = 0; i < size; ++i) {
+                newData[i] = data[i];
+            }
+            delete[] data;
+            data = newData;
         }
+        data[size++] = value;
     }
 
-    // Ищем наибольшую возможную сумму, которая не превосходит sum / 2
-    int subsetSum1 = 0;
-    for (int i = target; i >= 0; --i) {
-        if (dp[i]) {
-            subsetSum1 = i;
-            break;
-        }
+    // РћРїРµСЂР°С‚РѕСЂ РґРѕСЃС‚СѓРїР° Рє СЌР»РµРјРµРЅС‚Р°Рј РјР°СЃСЃРёРІР°
+    int operator[](int index) const {
+        return data[index];
     }
 
-    int subsetSum2 = sum - subsetSum1;  // Вторая сумма
-    int diff = abs(subsetSum1 - subsetSum2);  // Разница между суммами
-
-    // Восстановим элементы первого подмножества, которые составляют сумму subsetSum1
-    bool subset1[target + 1];
-    for (int i = 0; i <= target; ++i) {
-        subset1[i] = false;
+    int& operator[](int index) {
+        return data[index];
     }
-    subset1[subsetSum1] = true;
+};
 
-    for (int i = n - 1; i >= 0; --i) {
-        for (int j = target; j >= nums[i]; --j) {
-            if (subset1[j - nums[i]]) {
-                subset1[j] = true;
+// Р¤СѓРЅРєС†РёСЏ algorithm РІС‹РїРѕР»РЅСЏРµС‚ РїРѕРёСЃРє РїРѕРґРјР°СЃСЃРёРІРѕРІ СЃ Р·Р°РґР°РЅРЅРѕР№ СЃСѓРјРјРѕР№ Рё РІС‹РІРѕРґРёС‚ РёС… СЃСЂР°Р·Сѓ РЅР° СЌРєСЂР°РЅ.
+void algorithm(const DynamicArray& array, int target) {
+    int size = array.size;
+    // РџСЂРѕС…РѕРґРёРј РїРѕ РІСЃРµРј РІРѕР·РјРѕР¶РЅС‹Рј РїРѕРґРјР°СЃСЃРёРІР°Рј
+    for (int i = 0; i < size; ++i) {
+        int sum = 0;
+        for (int j = i; j < size; ++j) {
+            sum += array[j];  // Р”РѕР±Р°РІР»СЏРµРј С‚РµРєСѓС‰РёР№ СЌР»РµРјРµРЅС‚ Рє СЃСѓРјРјРµ
+            if (sum == target) {
+                // Р•СЃР»Рё СЃСѓРјРјР° РїРѕРґРјР°СЃСЃРёРІР° СЂР°РІРЅР° С†РµР»РµРІРѕР№, РІС‹РІРѕРґРёРј СЌС‚РѕС‚ РїРѕРґРјР°СЃСЃРёРІ
+                cout << "{ ";
+                for (int k = i; k <= j; ++k) {
+                    cout << array[k] << " ";
+                }
+                cout << "}" << endl;
             }
         }
     }
-
-    // Подмножество 1
-    int subset1Arr[n];
-    int idx1 = 0;
-    for (int i = 0; i < n; ++i) {
-        if (subset1[nums[i]]) {
-            subset1Arr[idx1++] = nums[i];
-        }
-    }
-
-    // Подмножество 2 (оставшиеся элементы)
-    int subset2Arr[n];
-    int idx2 = 0;
-    for (int i = 0; i < n; ++i) {
-        bool found = false;
-        for (int j = 0; j < idx1; ++j) {
-            if (nums[i] == subset1Arr[j]) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            subset2Arr[idx2++] = nums[i];
-        }
-    }
-
-    // Выводим результат
-    cout << "Подмножество 1: { ";
-    for (int i = 0; i < idx1; ++i) {
-        cout << subset1Arr[i] << " ";
-    }
-    cout << "}" << endl;
-
-    cout << "Подмножество 2: { ";
-    for (int i = 0; i < idx2; ++i) {
-        cout << subset2Arr[i] << " ";
-    }
-    cout << "}" << endl;
-
-    cout << "Разница между суммами: " << diff << endl;
 }
 
 int main() {
     setlocale (LC_ALL , "Russian");
-    int nums[] = {5, 8, 1, 14, 7};
-    int n = sizeof(nums) / sizeof(nums[0]);
+    int size;
 
-    findSubsetWithMinimalDifference(nums, n);
+    // Р’РІРѕРґ СЂР°Р·РјРµСЂР° РјР°СЃСЃРёРІР°
+    cout << "Р’РІРµРґРёС‚Рµ СЂР°Р·РјРµСЂ РјР°СЃСЃРёРІР°: ";
+    cin >> size;
+
+    DynamicArray array(size);  // РЎРѕР·РґР°РµРј РґРёРЅР°РјРёС‡РµСЃРєРёР№ РјР°СЃСЃРёРІ
+
+    // Р’РІРѕРґ СЌР»РµРјРµРЅС‚РѕРІ РјР°СЃСЃРёРІР°
+    for (int i = 0; i < size; ++i) {
+        cout << "Р’РІРµРґРёС‚Рµ Р·РЅР°С‡РµРЅРёРµ СЌР»РµРјРµРЅС‚Р°: ";
+        int value;
+        cin >> value;
+        array.push_back(value);  // Р”РѕР±Р°РІР»СЏРµРј СЌР»РµРјРµРЅС‚С‹ РІ РјР°СЃСЃРёРІ
+    }
+
+    int target;
+    // Р’РІРѕРґ С†РµР»РµРІРѕР№ СЃСѓРјРјС‹
+    cout << "Р’РІРµРґРёС‚Рµ РЅРµРѕР±С…РѕРґРёРјСѓСЋ СЃСѓРјРјСѓ СЌР»РµРјРµРЅС‚РѕРІ РїРѕРґРјР°СЃСЃРёРІР°: ";
+    cin >> target;
+
+    // РќР°С…РѕРґРёРј Рё РІС‹РІРѕРґРёРј РІСЃРµ РїРѕРґРјР°СЃСЃРёРІС‹ СЃ С†РµР»РµРІРѕР№ СЃСѓРјРјРѕР№
+    cout << "РќР°Р№РґРµРЅРЅС‹Рµ РїРѕРґРјР°СЃСЃРёРІС‹ СЃ СЃСѓРјРјРѕР№ " << target << ":\n";
+    algorithm(array, target);
 
     return 0;
 }
